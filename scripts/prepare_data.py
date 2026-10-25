@@ -34,6 +34,7 @@ def main():
     # CASIA-WebFace
     rec = args.casia_rec or find_file("train.rec")
     if rec:
+        print(f"CASIA: indexing labels in {rec} ...", flush=True)
         t = time.time()
         keys, labels = load_or_scan_labels(rec, os.path.join(args.out, "casia_labels.npy"))
         counts = np.bincount(labels)
@@ -57,7 +58,7 @@ def main():
     for name in BENCHMARKS:
         if name in bins:
             imgs, issame = load_bin(bins[name])
-            print(f"{name}: {len(issame)} pairs ({issame.sum()} same), images {imgs.shape}")
+            print(f"{name}: {len(issame)} pairs ({issame.sum()} same), images {imgs.shape}", flush=True)
         else:
             print(f"{name}: not found")
     manifest["bins"] = bins
@@ -66,6 +67,7 @@ def main():
     if not args.skip_gallery:
         lfw_dir = args.lfw_dir or find_dir("lfw-deepfunneled", must_contain="George_W_Bush")
         if lfw_dir:
+            print(f"LFW gallery from {lfw_dir}", flush=True)
             name = f"lfw_gallery_min{args.min_images}.npz"
             out = os.path.join(args.out, name)
             if not os.path.exists(out):
