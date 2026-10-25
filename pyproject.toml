@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fpgaface"
+version = "0.1.0"
+description = "Quantised face detection & recognition CNNs for FPGA deployment"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pillow",
+    "scikit-learn",
+    "pyyaml",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+# torch/torchvision are preinstalled on Kaggle; facenet-pytorch must be installed with --no-deps
+# (it pins old torch versions), see requirements.txt.
+teachers = ["onnx", "onnx2torch"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

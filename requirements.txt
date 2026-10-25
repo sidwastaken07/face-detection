@@ -1,0 +1,15 @@
+# Core (torch + torchvision come preinstalled on Kaggle)
+torch
+torchvision
+numpy
+pillow
+scikit-learn
+pyyaml
+tqdm
+# Teachers
+onnx
+onnx2torch
+# facenet-pytorch pins torch<2.3; install separately without deps:
+#   pip install --no-deps facenet-pytorch
+# Dev
+pytest
