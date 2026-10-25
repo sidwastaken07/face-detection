@@ -1,0 +1,4 @@
+# Width 0.5 — fits Zynq-7020 at uniform W4A4.
+base: base.yaml
+run_name: mfn_s_arcface_kd
+model: {width: 0.5}

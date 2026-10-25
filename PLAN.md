@@ -103,7 +103,9 @@ camera frame
 5. Cache teacher embeddings (original view only, fp16) for all CASIA images.
 
 ### Phase 2 — FP32 students
-6. On-chip budget calculator (weights + FINN FIFO/line buffers per bit-width) → size S/M/L to fit.
+6. On-chip budget calculator (weights + thresholds + line/skip buffers per bit-width) → size S/M/L.
+   **Result:** S = width 0.5 (fits Z7020 at W4A4, 88 %), M = width 0.75 (142 % on Z7020, 92 % on ZU3EG),
+   L = width 1.0. Thresholds dominate MobileFaceNet's on-chip memory → motivates mixed precision.
 7. Main run: MobileFaceNet-M, ~15 epochs, one-cycle LR, ArcFace + KD, 2×T4 DDP if available.
 8. Ablations on the 2 k-identity subset, ~8 epochs each: KD on/off, ArcFace/CosFace/AdaFace,
    112 vs 64 input, width S/L, VGG baseline.

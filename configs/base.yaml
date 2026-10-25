@@ -1,0 +1,35 @@
+# Shared defaults for FP32 student training on CASIA-WebFace (single T4, AMP).
+run_name: base
+model:
+  arch: mobilefacenet
+  width: 0.75
+  emb_dim: 128
+  input_size: 112
+data:
+  num_ids: null          # null = all ~10.5k identities; an int trains on a random identity subset
+  subset_seed: 0
+  workers: 4
+  aug: {flip: true, crop_scale: 0.9, jitter: 0.2, lowres_p: 0.2, blur_p: 0.1}
+loss:
+  head: arcface          # arcface | cosface | adaface
+  s: 64.0
+  m: null                # null = default margin for the head (0.5 / 0.35 / 0.4)
+  kd: proj_cos           # proj_cos | relational | null
+  kd_weight: 5.0
+  teacher: arcface_r50
+train:
+  epochs: 15
+  batch_size: 256
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 5.0e-4
+  warmup_epochs: 1
+  amp: true
+  channels_last: true
+  max_hours: 11.0        # stop cleanly before Kaggle's 12 h limit; re-run resumes
+  log_every: 200
+  seed: 0
+eval:
+  bins: [lfw, cfp_fp, agedb_30]
+  every: 1
+  final_bins: [lfw, cfp_fp, agedb_30, calfw, cplfw]

@@ -1,0 +1,6 @@
+# Reduced-schedule ablations: 2k-identity CASIA subset, 8 epochs. Compare runs to each other only.
+base: ../student_m.yaml
+run_name: abl_ref
+data: {num_ids: 2000}
+train: {epochs: 8, batch_size: 256, lr: 0.1, log_every: 100}
+eval: {bins: [lfw, cfp_fp, agedb_30], final_bins: [lfw, cfp_fp, agedb_30]}

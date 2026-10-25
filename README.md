@@ -11,7 +11,7 @@ See [`PLAN.md`](PLAN.md) for the full plan, design decisions and compute budget.
 | Phase | Status |
 |---|---|
 | 1 · Repo, data pipeline, metrics, FP32 baselines, teacher cache | ✅ code done, awaiting Kaggle run |
-| 2 · FP32 student (MobileFaceNet-FPGA) + ablations | ⏳ |
+| 2 · FP32 student (MobileFaceNet-FPGA) + ablations | ✅ code done, awaiting Kaggle run |
 | 3 · Quantisation (PTQ INT8, QAT W4/W2, mixed precision) | ⏳ |
 | 4 · Quantised face detector | ⏳ |
 | 5 · Robustness / explainability analysis + demo | ⏳ |
@@ -29,12 +29,28 @@ frame → tiny detector (QAT) → 5-pt alignment → MobileFaceNet-FPGA (mixed-p
   LFW ≥5-image gallery for closed/open-set identification
 * **Teacher:** InsightFace iResNet-50 ArcFace (FP32); FaceNet (VGGFace2) as the original baseline
 
+## Model sizing
+
+FINN keeps all weights, activation thresholds and stream buffers on chip. The first-order estimate
+(`scripts/budget.py`, tables in `docs/`) shows that **thresholds, not weights, dominate MobileFaceNet**
+(wide expansion layers × (2^A − 1) thresholds per channel):
+
+| MobileFaceNet-FPGA | params | W4A4 Zynq-7020 BRAM | W4A4 ZU3EG BRAM |
+|---|---|---|---|
+| S (width 0.5) | 0.28 M | 88 % ✅ | 57 % ✅ |
+| **M (width 0.75, main)** | 0.59 M | 142 % ❌ | 92 % ✅ |
+| L (width 1.0) | 1.00 M | 209 % ❌ | 135 % ❌ |
+
+The main model (M) is chosen so that uniform W4A4 does *not* fit the Zynq-7020 — closing that gap with
+hardware-aware mixed precision is the Phase 3 contribution.
+
 ## Running (Kaggle)
 
 | Notebook | Accelerator | Inputs |
 |---|---|---|
 | `notebooks/00_data_prep.ipynb` | None (CPU) | CASIA `faces_webface_112x112`, `jessicali9530/lfw-dataset` |
 | `notebooks/01_baselines_teacher.ipynb` | GPU T4 | same + output of 00 |
+| `notebooks/02_train_student.ipynb` | GPU T4 (×2 ok) | CASIA + outputs of 00 and 01 |
 
 Each notebook clones this repository and calls the scripts in `scripts/`; all logic lives in
 `src/fpgaface`. Enable Internet in the notebook settings.
@@ -52,9 +68,14 @@ pytest -q
 ```
 src/fpgaface/
   data/     recordio (.rec reader, no MXNet), casia, bins (verification sets), align, lfw gallery
-  models/   teachers (FaceNet, iResNet-50 ArcFace via onnx2torch)
+  models/   teachers (FaceNet, iResNet-50 ArcFace via onnx2torch), students (MobileFaceNet-FPGA, VGG),
+            ops (layer factories: FP32 now, Brevitas quantised in Phase 3)
+  train/    margin heads (ArcFace/CosFace/AdaFace), distillation, augmentation, training engine
   eval/     verification (10-fold, TAR@FAR), identification (closed/open-set), cost (params/MACs/bytes)
-scripts/    prepare_data.py, baselines.py, cache_teacher.py
+  hw/       on-chip memory budget estimate (BRAM/LUTRAM for FINN dataflow)
+configs/    YAML configs (base + main runs + ablations/)
+scripts/    prepare_data, baselines, cache_teacher, budget, train_student, summarize_runs
+docs/       budget_<device>.md
 notebooks/  Kaggle notebooks + the original FaceNet__SVM.ipynb
 tests/      unit tests on synthetic data (CPU)
 ```
